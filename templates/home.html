@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Printer Toner System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+
+  <style>
+    body {
+      background-color: #f3f4f6;
+      font-family: 'Inter', sans-serif;
+    }
+    .card {
+      border: none;
+      border-radius: 1rem;
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.05);
+    }
+    .btn-primary {
+        background-color: white;
+  color: #4f46e5;
+  border: 2px solid #4f46e5;
+  transition: all 0.3s ease;
+    }
+    .btn-primary:hover {
+        background-color: #298572;
+  color: white;
+  border-color: #4f46e5;
+    }
+    .btn-custom {
+  background-color: white;
+  color: #4f46e5;
+  border: 2px solid #4f46e5;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn-custom:hover {
+  background-color: #4f46e5;
+  color: white;
+  border-color: #4f46e5;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(79, 70, 229, 0.3);
+}
+  </style>
+</head>
+
+<body class="d-flex align-items-center justify-content-center vh-100">
+
+  <div class="container text-center">
+    <div class="card p-5 bg-white">
+      <h1 class="mb-4 text-3xl font-bold text-gray-800">📠 Printer Toner System</h1>
+      <p class="mb-4 text-gray-600">Easily manage your toner cartridge requests</p>
+
+      <div class="d-grid gap-3">
+        <a href="{{ url_for('request_toner') }}" class="btn btn-primary btn-lg">📝 Request New Toner</a>
+        <a href="{{ url_for('view_requests') }}" class="btn btn-outline-primary btn-lg">📄 View Toner Requests</a>
+        <a href="{{ url_for('view_stock') }}" class="btn btn-outline-success btn-lg">📦 View Stock Inventory</a>
+        <a href="{{ url_for('add_stock') }}" class="btn btn-outline-dark btn-lg">➕ Add New Stock</a>
+        <a href="{{ url_for('issue_cartridge') }}" class="btn btn-outline-primary btn-custom btn-lg">📤 Issue Cartridge to Employee</a>
+        <a href="{{ url_for('issued_cartridges') }}" class="btn btn-outline-dark btn-lg">📦 View Issued Cartridges</a>
+        <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+
+      </div>
+      
+    </div>
+  </div>
+
+  <!-- Bootstrap 5 JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>

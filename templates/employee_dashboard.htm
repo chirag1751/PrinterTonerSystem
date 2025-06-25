@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html>
+<head><title>Printers</title></head>
+<body>
+  <h2>Printer List</h2>
+  {% for printer in printers %}
+    <p>{{ printer.id }} - {{ printer.location }} ({{ printer.model }}) Toner: {{ printer.toner_level }}</p>
+  {% endfor %}
+  <a href="/request_form">Request Toner Replacement</a>
+</body>
+</html>

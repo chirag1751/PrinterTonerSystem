@@ -1,0 +1,7 @@
+.venv/
+flask_session/
+instance/
+__pycache__/
+*.pyc
+.DS_Store
+.env

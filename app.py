@@ -1,8 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
-from models import db, User, TonerRequest, CartridgeStock, CartridgeIssue, Employee  # NEW LINE
-
+from models import db, User, TonerRequest, CartridgeStock, CartridgeIssue, Employee
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
@@ -11,51 +10,15 @@ app.secret_key = 'your_secret_key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///toner.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# db = SQLAlchemy(app)
-
+# Initialize SQLAlchemy
 db.init_app(app)
 
+# ---------- DB Route ---------- #
 
-
-# ---------- ORM MODELS ---------- #
-
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    password = db.Column(db.String(200), nullable=False)
-    role = db.Column(db.String(20), nullable=False)
-
-class TonerRequest(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    department = db.Column(db.String(100))
-    printer_model = db.Column(db.String(100))
-    toner_type = db.Column(db.String(100))
-    requested_by = db.Column(db.String(100))
-    request_date = db.Column(db.DateTime, server_default=db.func.now())
-
-class CartridgeStock(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    printer_model_no = db.Column(db.String(100))
-    cartridge_no = db.Column(db.String(100))
-    quantity = db.Column(db.Integer)
-    issue_to = db.Column(db.String(100))
-    damaged = db.Column(db.Integer)
-    total_stock = db.Column(db.Integer)
-
-class CartridgeIssue(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    employee_name = db.Column(db.String(100))
-    printer_model_no = db.Column(db.String(100))
-    cartridge_no = db.Column(db.String(100))
-    quantity_issued = db.Column(db.Integer)
-    issue_date = db.Column(db.DateTime, server_default=db.func.now())
-
-# good:
 @app.route('/create-db')
 def create_db():
     db.create_all()
     return "Database tables created successfully!"
-
 
 
 # ---------- AUTH ROUTES ---------- #

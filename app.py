@@ -1,78 +1,89 @@
 from flask import Flask, render_template, request, redirect, url_for, session
-from flask_mysqldb import MySQL
-from flask_session import Session
+from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
+app.secret_key = 'your_secret_key'
 
-# Configure MySQL
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = ''
-app.config['MYSQL_DB'] = 'printer_toner_db'
-app.config['MYSQL_UNIX_SOCKET'] = '/Applications/XAMPP/xamppfiles/var/mysql/mysql.sock'
+# SQLite Config
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///toner.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Session config
-app.config['SESSION_TYPE'] = 'filesystem'
-Session(app)
+db = SQLAlchemy(app)
 
-mysql = MySQL(app)
+# ---------- ORM MODELS ---------- #
 
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    password = db.Column(db.String(200), nullable=False)
+    role = db.Column(db.String(20), nullable=False)
+
+class TonerRequest(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    department = db.Column(db.String(100))
+    printer_model = db.Column(db.String(100))
+    toner_type = db.Column(db.String(100))
+    requested_by = db.Column(db.String(100))
+    request_date = db.Column(db.DateTime, server_default=db.func.now())
+
+class CartridgeStock(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    printer_model_no = db.Column(db.String(100))
+    cartridge_no = db.Column(db.String(100))
+    quantity = db.Column(db.Integer)
+    issue_to = db.Column(db.String(100))
+    damaged = db.Column(db.Integer)
+    total_stock = db.Column(db.Integer)
+
+class CartridgeIssue(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    employee_name = db.Column(db.String(100))
+    printer_model_no = db.Column(db.String(100))
+    cartridge_no = db.Column(db.String(100))
+    quantity_issued = db.Column(db.Integer)
+    issue_date = db.Column(db.DateTime, server_default=db.func.now())
 
 # ---------- AUTH ROUTES ---------- #
 
-# Signup route
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
-    cur = mysql.connection.cursor()
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
         role = request.form['role']
 
-        # Generate hashed password using pbkdf2:sha256 (since scrypt not supported on your Python build)
         hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
+        new_user = User(username=username, password=hashed_password, role=role)
+        db.session.add(new_user)
+        db.session.commit()
 
-        # Insert user into database
-        cur.execute("INSERT INTO users (username, password, role) VALUES (%s, %s, %s)",
-                    (username, hashed_password, role))
-        mysql.connection.commit()
-        cur.close()
         return redirect(url_for('login'))
-
     return render_template('signup.html')
 
 
-# Login route
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    cur = mysql.connection.cursor()
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
 
-        # Fetch user by username
-        cur.execute("SELECT * FROM users WHERE username=%s", (username,))
-        user = cur.fetchone()
-        cur.close()
+        user = User.query.filter_by(username=username).first()
 
-        if user and check_password_hash(user[2], password):
-            session['user_id'] = user[0]
-            session['username'] = user[1]
-            session['role'] = user[3]
+        if user and check_password_hash(user.password, password):
+            session['user_id'] = user.id
+            session['username'] = user.username
+            session['role'] = user.role
             return redirect(url_for('home'))
         else:
             return "Invalid credentials"
-
     return render_template('login.html')
-
 
 
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('login'))
-
 
 # ---------- MAIN ROUTES ---------- #
 
@@ -82,28 +93,18 @@ def home():
         return redirect(url_for('login'))
     return render_template('home.html')
 
-
 @app.route('/request-toner', methods=['GET', 'POST'])
 def request_toner():
-    # if 'role' not in session or session['role'] != 'user':
-    #     return "Unauthorized Access", 403
-
     if request.method == 'POST':
-        department = request.form['department']
-        printer_model = request.form['printerModel']
-        toner_type = request.form['tonerType']
-        requested_by = request.form['requestedBy']
-
-        cur = mysql.connection.cursor()
-        cur.execute("""
-            INSERT INTO toner_requests (department, printer_model, toner_type, requested_by)
-            VALUES (%s, %s, %s, %s)
-        """, (department, printer_model, toner_type, requested_by))
-        mysql.connection.commit()
-        cur.close()
-
+        new_request = TonerRequest(
+            department=request.form['department'],
+            printer_model=request.form['printerModel'],
+            toner_type=request.form['tonerType'],
+            requested_by=request.form['requestedBy']
+        )
+        db.session.add(new_request)
+        db.session.commit()
         return redirect(url_for('home'))
-
     return render_template('request_toner.html')
 
 
@@ -111,10 +112,7 @@ def request_toner():
 def view_requests():
     if 'role' not in session or session['role'] != 'admin':
         return "Unauthorized Access", 403
-    cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM toner_requests ORDER BY request_date DESC")
-    requests = cur.fetchall()
-    cur.close()
+    requests = TonerRequest.query.order_by(TonerRequest.request_date.desc()).all()
     return render_template('view_requests.html', requests=requests)
 
 
@@ -122,15 +120,9 @@ def view_requests():
 def view_stock():
     if 'role' not in session or session['role'] != 'admin':
         return "Unauthorized Access", 403
-    cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM cartridge_stock")
-    stock = cur.fetchall()
-
-    cur.execute("SELECT DISTINCT printer_model_no FROM cartridge_stock")
-    models_data = cur.fetchall()
-    models = [model[0] for model in models_data]
-
-    cur.close()
+    stock = CartridgeStock.query.all()
+    models = db.session.query(CartridgeStock.printer_model_no).distinct().all()
+    models = [model[0] for model in models]
     return render_template('view_stock.html', stock=stock, models=models)
 
 
@@ -139,36 +131,24 @@ def add_stock():
     if 'role' not in session or session['role'] != 'admin':
         return "Unauthorized Access", 403
     if request.method == 'POST':
-        printer_model_no = request.form['printerModel']
-        cartridge_no = request.form['cartridgeNo']
-        quantity = int(request.form['quantity'])
-        issue_to = request.form.get('issueTo', 'None')
-        damaged = int(request.form['damaged'])
-
-        cur = mysql.connection.cursor()
-
-        cur.execute("""
-            INSERT INTO cartridge_stock 
-            (printer_model_no, cartridge_no, quantity, issue_to, damaged, total_stock)
-            VALUES (%s, %s, %s, %s, %s, %s)
-            ON DUPLICATE KEY UPDATE 
-                quantity = quantity + VALUES(quantity),
-                total_stock = total_stock + VALUES(total_stock)
-        """, (printer_model_no, cartridge_no, quantity, issue_to, damaged, quantity))
-
-        mysql.connection.commit()
-        cur.close()
-
+        new_stock = CartridgeStock(
+            printer_model_no=request.form['printerModel'],
+            cartridge_no=request.form['cartridgeNo'],
+            quantity=int(request.form['quantity']),
+            issue_to=request.form.get('issueTo', 'None'),
+            damaged=int(request.form['damaged']),
+            total_stock=int(request.form['quantity'])
+        )
+        db.session.add(new_stock)
+        db.session.commit()
         return redirect(url_for('view_stock'))
 
-    cur = mysql.connection.cursor()
-    cur.execute("SELECT DISTINCT printer_model_no FROM cartridge_stock")
-    printer_models = [row[0] for row in cur.fetchall()]
+    printer_models = db.session.query(CartridgeStock.printer_model_no).distinct().all()
+    cartridge_nos = db.session.query(CartridgeStock.cartridge_no).distinct().all()
 
-    cur.execute("SELECT DISTINCT cartridge_no FROM cartridge_stock")
-    cartridge_nos = [row[0] for row in cur.fetchall()]
+    printer_models = [p[0] for p in printer_models]
+    cartridge_nos = [c[0] for c in cartridge_nos]
 
-    cur.close()
     return render_template('add_stock.html', printer_models=printer_models, cartridge_nos=cartridge_nos)
 
 
@@ -176,63 +156,52 @@ def add_stock():
 def issue_cartridge():
     if 'role' not in session or session['role'] != 'admin':
         return "Unauthorized Access", 403
-    cur = mysql.connection.cursor()
 
     if request.method == 'POST':
-        employee_name = request.form['employeeName']
-        printer_model_no = request.form['printerModel']
-        cartridge_no = request.form['cartridgeNo']
-        quantity = int(request.form['quantity'])
+        issue = CartridgeIssue(
+            employee_name=request.form['employeeName'],
+            printer_model_no=request.form['printerModel'],
+            cartridge_no=request.form['cartridgeNo'],
+            quantity_issued=int(request.form['quantity'])
+        )
+        db.session.add(issue)
 
-        cur.execute("""
-            INSERT INTO cartridge_issue 
-            (employee_name, printer_model_no, cartridge_no, quantity_issued)
-            VALUES (%s, %s, %s, %s)
-        """, (employee_name, printer_model_no, cartridge_no, quantity))
+        stock = CartridgeStock.query.filter_by(
+            printer_model_no=request.form['printerModel'],
+            cartridge_no=request.form['cartridgeNo']
+        ).first()
 
-        cur.execute("""
-            UPDATE cartridge_stock 
-            SET total_stock = total_stock - %s
-            WHERE printer_model_no = %s AND cartridge_no = %s AND total_stock >= %s
-        """, (quantity, printer_model_no, cartridge_no, quantity))
+        if stock and stock.total_stock >= int(request.form['quantity']):
+            stock.total_stock -= int(request.form['quantity'])
+        else:
+            return "Insufficient stock"
 
-        mysql.connection.commit()
-        cur.close()
-
+        db.session.commit()
         return redirect(url_for('view_stock'))
 
-    cur.execute("SELECT DISTINCT printer_model_no FROM cartridge_stock")
-    printer_models = [row[0] for row in cur.fetchall()]
+    printer_models = [p[0] for p in db.session.query(CartridgeStock.printer_model_no).distinct().all()]
+    cartridge_nos = [c[0] for c in db.session.query(CartridgeStock.cartridge_no).distinct().all()]
 
-    cur.execute("SELECT DISTINCT cartridge_no FROM cartridge_stock")
-    cartridge_nos = [row[0] for row in cur.fetchall()]
-
-    cur.execute("SELECT employee_name FROM employees")
-    employees = [row[0] for row in cur.fetchall()]
-
-    cur.close()
     return render_template('issue_cartridge.html',
                            printer_models=printer_models,
                            cartridge_nos=cartridge_nos,
-                           employees=employees)
+                           employees=[])
 
 
 @app.route('/issued-cartridges')
 def issued_cartridges():
     if 'role' not in session or session['role'] != 'admin':
         return "Unauthorized Access", 403
-    cur = mysql.connection.cursor()
-
-    cur.execute("""
-        SELECT id, employee_name, printer_model_no, cartridge_no, quantity_issued, issue_date 
-        FROM cartridge_issue
-        ORDER BY issue_date DESC
-    """)
-    issued_list = cur.fetchall()
-
-    cur.close()
+    issued_list = CartridgeIssue.query.order_by(CartridgeIssue.issue_date.desc()).all()
     return render_template('issued_cartridges.html', issued_list=issued_list)
 
 
+@app.route('/healthz')
+def health_check():
+    return "OK", 200
+
+
 if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()
     app.run(debug=True, port=5002)

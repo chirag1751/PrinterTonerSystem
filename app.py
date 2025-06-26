@@ -6,7 +6,8 @@ app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 
 # SQLite Config
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://toner_0xlo_user:0gKYMP7RUh6ZMGgspdw3OvMx6WE1Qb3S@dpg-d1ehq0euk2gs73ao6ufg-a.singapore-postgres.render.com/toner_0xlo'
+import os
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)

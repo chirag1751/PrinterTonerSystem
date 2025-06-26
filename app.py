@@ -106,26 +106,47 @@ def view_stock():
 def add_stock():
     if 'role' not in session or session['role'] != 'admin':
         return "Unauthorized Access", 403
+
     if request.method == 'POST':
-        new_stock = CartridgeStock(
-            printer_model_no=request.form['printerModel'],
-            cartridge_no=request.form['cartridgeNo'],
-            quantity=int(request.form['quantity']),
-            issue_to=request.form.get('issueTo', 'None'),
-            damaged=int(request.form['damaged']),
-            total_stock=int(request.form['quantity'])
-        )
-        db.session.add(new_stock)
+        printer_model = request.form['printerModel']
+        cartridge_no = request.form['cartridgeNo']
+        quantity = int(request.form['quantity'])
+        issue_to = request.form.get('issueTo', 'None')
+        damaged = int(request.form['damaged'])
+
+        # Check if the same stock already exists
+        existing_stock = CartridgeStock.query.filter_by(
+            printer_model_no=printer_model,
+            cartridge_no=cartridge_no
+        ).first()
+
+        if existing_stock:
+            # Update existing stock quantities
+            existing_stock.quantity += quantity
+            existing_stock.total_stock += quantity
+            existing_stock.damaged += damaged
+        else:
+            # Create new stock entry
+            new_stock = CartridgeStock(
+                printer_model_no=printer_model,
+                cartridge_no=cartridge_no,
+                quantity=quantity,
+                issue_to=issue_to,
+                damaged=damaged,
+                total_stock=quantity
+            )
+            db.session.add(new_stock)
+
         db.session.commit()
         return redirect(url_for('view_stock'))
 
-    printer_models = db.session.query(CartridgeStock.printer_model_no).distinct().all()
-    cartridge_nos = db.session.query(CartridgeStock.cartridge_no).distinct().all()
+    printer_models = [p[0] for p in db.session.query(CartridgeStock.printer_model_no).distinct().all()]
+    cartridge_nos = [c[0] for c in db.session.query(CartridgeStock.cartridge_no).distinct().all()]
 
-    printer_models = [p[0] for p in printer_models]
-    cartridge_nos = [c[0] for c in cartridge_nos]
+    return render_template('add_stock.html',
+                           printer_models=printer_models,
+                           cartridge_nos=cartridge_nos)
 
-    return render_template('add_stock.html', printer_models=printer_models, cartridge_nos=cartridge_nos)
 
 # ---------- ISSUE CARTRIDGE ----------
 

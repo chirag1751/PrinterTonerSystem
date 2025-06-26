@@ -96,10 +96,11 @@ def view_requests():
 def view_stock():
     if 'role' not in session or session['role'] != 'admin':
         return "Unauthorized Access", 403
-    stock = CartridgeStock.query.all()
+    stock = CartridgeStock.query.order_by(CartridgeStock.id.asc()).all()
     models = db.session.query(CartridgeStock.printer_model_no).distinct().all()
     models = [model[0] for model in models]
     return render_template('view_stock.html', stock=stock, models=models)
+
 
 
 @app.route('/add-stock', methods=['GET', 'POST'])

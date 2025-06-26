@@ -23,14 +23,15 @@
 
   <form method="POST" action="{{ url_for('issue_cartridge') }}">
     <div class="mb-3">
-      <label for="employeeName" class="form-label">Select Employee</label>
-      <select class="form-select" name="employeeName" required>
+      <label for="employeeName" class="form-label">Employee Name</label>
+      <select class="form-select" id="employeeName" name="employeeName" required>
         <option value="" disabled selected>Select Employee</option>
         {% for employee in employees %}
-        <option value="{{ employee }}">{{ employee }}</option>
+          <option value="{{ employee }}">{{ employee }}</option>
         {% endfor %}
       </select>
     </div>
+    
     
 
     <div class="mb-3">

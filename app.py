@@ -180,11 +180,12 @@ def issue_cartridge():
 
     printer_models = [p[0] for p in db.session.query(CartridgeStock.printer_model_no).distinct().all()]
     cartridge_nos = [c[0] for c in db.session.query(CartridgeStock.cartridge_no).distinct().all()]
+    employees = [e.employee_name for e in Employee.query.all()]  # ✅ Fetch employee names
 
     return render_template('issue_cartridge.html',
                            printer_models=printer_models,
                            cartridge_nos=cartridge_nos,
-                           employees=[])
+                           employees=employees)
 
 # ---------- VIEW ISSUED CARTRIDGES ----------
 

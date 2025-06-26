@@ -1,6 +1,8 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
+from models import db, User, TonerRequest, CartridgeStock, CartridgeIssue, Employee  # NEW LINE
+
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
@@ -9,7 +11,11 @@ app.secret_key = 'your_secret_key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///toner.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-db = SQLAlchemy(app)
+# db = SQLAlchemy(app)
+
+db.init_app(app)
+
+
 
 # ---------- ORM MODELS ---------- #
 
@@ -43,6 +49,14 @@ class CartridgeIssue(db.Model):
     cartridge_no = db.Column(db.String(100))
     quantity_issued = db.Column(db.Integer)
     issue_date = db.Column(db.DateTime, server_default=db.func.now())
+
+# good:
+@app.route('/create-db')
+def create_db():
+    db.create_all()
+    return "Database tables created successfully!"
+
+
 
 # ---------- AUTH ROUTES ---------- #
 

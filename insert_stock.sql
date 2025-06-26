@@ -1,0 +1,22 @@
+INSERT INTO cartridge_stock (printer_model_no, cartridge_no, quantity, issue_to, damaged, total_stock)
+VALUES
+('HP Laserjet Ultra M106w, MFP 134d, HP Laserjet Ult...', '33A-(CF233A)', 26, NULL, 0, 22),
+('HP Laserjet Pro-M403n, M403d, M403dn, M403dw, MFP-...', '28A-(CF228A)', 12, NULL, 0, 3),
+('HP Laserjet- M-1120mfp, M-1522mfp, P1505', '36A', 41, NULL, 0, 35),
+('HP Laserjet- P1007, 1008, P1106, P1108, M-1136mfp,...', '(PL) H-388A', 9, NULL, 0, 0),
+('HP Laserjet- P2035, P2035n, P2055dn, P2055x, M400,...', 'ALPTCH505A (280A)', 19, NULL, 2, 8),
+('HP Laserjet Pro-M405n, M405d, M405dn, M405dw, M305...', '(CF277A) 77A', 8, NULL, 0, 8),
+('HP Laserjet- Ultra M106, MFP-M134', '34A (CF234A)-Drum', 6, NULL, 0, 0),
+('HP Laserjet-1000, 1005, 1200, 1220, 3300, 3380', '15A (C7115A)', 1, NULL, 0, 1),
+('HP Laserjet-M203d, 203dn, 203dw, HP Laserjet Pro M...', '(ALPTCHT230A) 30A', 1, NULL, 0, 1),
+('HP Laserjet Pro-M452, M477', 'Black-4, Yellow-4, Magenta-4, Cyan-4', 16, NULL, 0, 4),
+('HP Laserjet p1600', '78A', 6, NULL, 0, 4),
+('Lexmark- MS310, MS315, MS410, MS415, MS510, MS610,...', '01-MS310, MS315, MS410, MS415, MS510, MS61001-MX31...', 2, NULL, 0, 0),
+('Lexmark- MS/MX, 310,410,510,610', 'MS/MX, 310,410,510,610 Drum-(50F0200)', 4, NULL, 0, 0),
+('Brother-DCP-B7530dn, B7500d, MFC-B7700, MFC-B7720,...', 'Drum-(DRB021)', 8, NULL, 0, 8),
+('Brother (Toner) B2000,2050,2080,7500,7520,7530,770...', 'PC-B021 (TN)', 19, NULL, 0, 10),
+('Canon-Image Class LBP214dw, 215dw, MF426dw, 424dw,...', 'H-226A/CRG-052', 5, NULL, 0, 0),
+('Kyocera-Colored Printer, Ecosys- P5021dn, P5021cdw...', 'Toner Kit Black-TK-5234 (02), Yellow-(03), Cyan-(0...', 15, NULL, 0, 9),
+('HP Laserjet p1600', '36A', 30, NULL, 0, 30),
+('HP Laserjet- M-1120mfp', '36A', 10, NULL, 0, 10),
+('HP Laserjet p1600', 'ALPTCH505A (280A)', 30, NULL, 2, 30);

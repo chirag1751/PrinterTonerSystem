@@ -49,12 +49,12 @@
         <tbody>
           {% for request in requests %}
           <tr>
-            <td>{{ request[0] }}</td>
-            <td>{{ request[1] }}</td>
-            <td>{{ request[2] }}</td>
-            <td>{{ request[3] }}</td>
-            <td>{{ request[4] }}</td>
-            <td>{{ request[5] }}</td>
+            <td>{{ request.id }}</td>
+            <td>{{ request.department }}</td>
+            <td>{{ request.printer_model }}</td>
+            <td>{{ request.toner_type }}</td>
+            <td>{{ request.requested_by }}</td>
+            <td>{{ request.date_requested.strftime('%Y-%m-%d') }}</td>
           </tr>
           {% else %}
           <tr>

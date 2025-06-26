@@ -1,27 +1,21 @@
 from flask import Flask, render_template, request, redirect, url_for, session
-from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
-from models import db, User, TonerRequest, CartridgeStock, CartridgeIssue, Employee
+from models import db, User, Employee, TonerRequest, CartridgeStock, CartridgeIssue
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 
 # SQLite Config
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///toner.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://toner_0xlo_user:0gKYMP7RUh6ZMGgspdw3OvMx6WE1Qb3S@dpg-d1ehq0euk2gs73ao6ufg-a.singapore-postgres.render.com/toner_0xlo'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Initialize SQLAlchemy
 db.init_app(app)
 
-# ---------- DB Route ---------- #
-
-@app.route('/create-db')
-def create_db():
+# ---------- CREATE TABLES ON STARTUP ----------
+with app.app_context():
     db.create_all()
-    return "Database tables created successfully!"
 
-
-# ---------- AUTH ROUTES ---------- #
+# ---------- AUTH ROUTES ----------
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
@@ -62,13 +56,15 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
-# ---------- MAIN ROUTES ---------- #
+# ---------- MAIN ROUTES ----------
 
 @app.route('/')
 def home():
     if 'username' not in session:
         return redirect(url_for('login'))
     return render_template('home.html')
+
+# ---------- TONER REQUEST ROUTES ----------
 
 @app.route('/request-toner', methods=['GET', 'POST'])
 def request_toner():
@@ -89,9 +85,11 @@ def request_toner():
 def view_requests():
     if 'role' not in session or session['role'] != 'admin':
         return "Unauthorized Access", 403
-    requests = TonerRequest.query.order_by(TonerRequest.request_date.desc()).all()
+    requests = TonerRequest.query.order_by(TonerRequest.date_requested.desc()).all()
     return render_template('view_requests.html', requests=requests)
 
+
+# ---------- STOCK ROUTES ----------
 
 @app.route('/view-stock')
 def view_stock():
@@ -128,6 +126,7 @@ def add_stock():
 
     return render_template('add_stock.html', printer_models=printer_models, cartridge_nos=cartridge_nos)
 
+# ---------- ISSUE CARTRIDGE ----------
 
 @app.route('/issue-cartridge', methods=['GET', 'POST'])
 def issue_cartridge():
@@ -164,6 +163,7 @@ def issue_cartridge():
                            cartridge_nos=cartridge_nos,
                            employees=[])
 
+# ---------- VIEW ISSUED CARTRIDGES ----------
 
 @app.route('/issued-cartridges')
 def issued_cartridges():
@@ -172,12 +172,14 @@ def issued_cartridges():
     issued_list = CartridgeIssue.query.order_by(CartridgeIssue.issue_date.desc()).all()
     return render_template('issued_cartridges.html', issued_list=issued_list)
 
+# ---------- HEALTH CHECK ROUTE ----------
 
 @app.route('/healthz')
 def health_check():
     return "OK", 200
 
 
+# ---------- RUN APP ----------
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
